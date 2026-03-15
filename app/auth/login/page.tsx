@@ -14,7 +14,7 @@ export default function LoginPage() {
   // If the user already has a token, validate it before redirecting.
   useEffect(() => {
     const validateToken = async () => {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (!token) return;
 
       try {
@@ -28,9 +28,9 @@ export default function LoginPage() {
         }
 
         // If token is invalid/expired, clear it so we don't loop.
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
       } catch {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
       }
     };
 
@@ -56,8 +56,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Save JWT in localStorage
-      localStorage.setItem('token', data.token);
+      // Save JWT in sessionStorage
+      sessionStorage.setItem('token', data.token);
 
       router.push('/dashboard');
     } catch (err: any) {
