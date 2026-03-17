@@ -105,7 +105,7 @@ export default function DashboardPage() {
 
               {user?.is_admin && (
                 <Link
-                  href="/admin/products"
+                  href="/admin"
                   className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition"
                 >
                   <p className="font-semibold text-purple-600">Admin Panel</p>
