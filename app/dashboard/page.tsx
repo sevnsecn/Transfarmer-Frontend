@@ -6,6 +6,8 @@ import Link from 'next/link';
 
 interface User {
   id: string;
+  user_name: string;
+  user_email: string;
   is_admin: boolean;
 }
 
@@ -16,38 +18,25 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = sessionStorage.getItem('token');
-      if (!token) {
-        router.push('/auth/login');
-        return;
-      }
+  const fetchUser = async () => {
+    const token = sessionStorage.getItem('token');
+    const storedUser = sessionStorage.getItem('user');
 
-      try {
-        const res = await fetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
+    if (!token || !storedUser) {
+      router.push('/auth/login');
+      return;
+    }
 
-        if (!res.ok) {
-          router.push('/auth/login');
-          return;
-        }
-
-        const data = await res.json();
-        setUser(data.user);
-      } catch (err: any) {
-        setError(err.message || 'Failed to verify authentication');
-        router.push('/auth/login');
-      } finally {
-        setLoading(false);
-      }
-    };
+    setUser(JSON.parse(storedUser));
+    setLoading(false);
+  };
 
     fetchUser();
   }, [router]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     router.push('/auth/login');
   };
 
@@ -88,7 +77,7 @@ export default function DashboardPage() {
 
       <div className="container mx-auto px-6 py-12">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Welcome to Dashboard</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Welcome back, {user?.user_name}!</h2>
 
           <div className="space-y-4">
             <div>

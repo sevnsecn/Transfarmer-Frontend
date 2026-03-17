@@ -10,31 +10,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   // If the user already has a token, validate it before redirecting.
   useEffect(() => {
-    const validateToken = async () => {
-      const token = sessionStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        const res = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
-          router.push('/dashboard');
-          return;
-        }
-
-        // If token is invalid/expired, clear it so we don't loop.
-        sessionStorage.removeItem('token');
-      } catch {
-        sessionStorage.removeItem('token');
-      }
-    };
-
-    validateToken();
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    }
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +27,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      console.log('submitting', email, password)
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,8 +41,9 @@ export default function LoginPage() {
         return;
       }
 
-      // Save JWT in sessionStorage
-      sessionStorage.setItem('token', data.token);
+      
+      sessionStorage.setItem('token', data.token); // Save JWT token in sessionStorage
+      sessionStorage.setItem('user', JSON.stringify(data.user)); // store the user object that contains id, user_name, user_email, is_admin
 
       router.push('/dashboard');
     } catch (err: any) {
@@ -85,30 +71,39 @@ export default function LoginPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
+              onBlur={(e) => {
+                if (!e.target.value) setEmailError('Email is required');
+                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value)) setEmailError('Please enter a valid email');
+              }}
+              placeholder="you@example.com"
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+            />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }}
+              onBlur={(e) => {
+                if (!e.target.value) setPasswordError('Password is required');
+              }}
+              placeholder="••••••••"
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+            />
+            {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
             </div>
 
             <button
