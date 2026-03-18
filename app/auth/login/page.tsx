@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense } from 'react'; // Suspense is required because useSearchParams() can only run on the client, not during server-side rendering 
+// [ALWAYS USE SUSPENSE WHEN USING useSearchParams()]
 
-export default function LoginPage() {
-  const router = useRouter();
+function LoginPage() {
+  const router = useRouter();  // what actually redirects the user
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect'); //allows paramaters used to set where to redirect after login, works together with router
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +21,7 @@ export default function LoginPage() {
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (token) {
-      router.push('/dashboard');
+      router.push(redirect ||'/dashboard'); // if the user is already logged in, redirect to a page set in the params or dashboard by default
     }
   }, [router]);
 
@@ -126,5 +130,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <LoginPage />
+    </Suspense>
   );
 }
