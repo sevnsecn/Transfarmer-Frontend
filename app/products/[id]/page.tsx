@@ -56,38 +56,40 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setQuantity(val);
   };
 
-  const handleAddToCart = () => {
-    if (!isLoggedIn) {
-      router.push(`/auth/login?redirect=/products/${id}`);
-      return;
-    }
+ const handleAddToCart = async () => {
+  if (!isLoggedIn) {
+    router.push(`/auth/login?redirect=/products/${id}`);
+    return;
+  }
 
-    if (!product) return;
+  if (!product) return;
 
-    // Read existing cart
-    const existing = localStorage.getItem('cart');
-    const cart = existing ? JSON.parse(existing) : [];
+  try {
+    const token = sessionStorage.getItem("token");
 
-    // Check if product already in cart
-    const existingIndex = cart.findIndex((item: any) => item.product_id === product._id);
-    if (existingIndex !== -1) {
-      // Update quantity, cap at stock
-      const newQty = Math.min(cart[existingIndex].quantity_kg + quantity, product.stock_kg);
-      cart[existingIndex].quantity_kg = newQty;
-    } else {
-      cart.push({
+    const res = await fetch("/api/orderItems", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
         product_id: product._id,
-        product_name: product.product_name,
-        price_per_kg: product.price_per_kg,
-        quantity_kg: quantity,
-        product_image: product.product_image || '',
-      });
-    }
+        quantity: quantity,
+      }),
+    });
 
-    localStorage.setItem('cart', JSON.stringify(cart));
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2500);
-  };
+    const data = await res.json();
+    console.log("ADD RESULT:", data);
+
+    if (data.success) {
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    }
+  } catch (err) {
+    console.error("Add to cart failed:", err);
+  }
+};
 
   if (loading) {
     return (

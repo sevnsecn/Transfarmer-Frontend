@@ -19,12 +19,12 @@ interface Product {
 }
 
 export default function ProductsPage() {
-  const router = useRouter();
+ 
   const [products, setProducts] = useState<Product[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
 
   // Filters
   const [search, setSearch] = useState('');
@@ -34,8 +34,6 @@ export default function ProductsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    setIsLoggedIn(!!token);
     fetchFarms();
     fetchProducts();
   }, []);
@@ -103,39 +101,7 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            Transfarmers
-          </Link>
-          <div className="flex gap-3">
-            {isLoggedIn ? (
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition"
-              >
-                Dashboard
-              </button>
-            ) : (
-              <>
-                <Link
-                  href="/auth/login"
-                  className="text-sm font-semibold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="text-sm font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+   
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
