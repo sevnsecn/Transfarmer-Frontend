@@ -23,7 +23,7 @@ export default function Navbar() {
 
        <div className="flex gap-3">
 
-  {/* 🔥 Products Button */}
+  {/* Products Button */}
 <button
   onClick={() => router.push("/products")}
   className="text-sm font-semibold bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellos-700 transition"
@@ -31,13 +31,19 @@ export default function Navbar() {
   Products
 </button>
 
-  {/* 🔥 Cart Button */}
+  {/* Cart Button */}
   <button
     onClick={() => router.push("/cart")}
     className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
   >
     Cart
   </button>
+  <Link
+  href="/orders"
+  className="px-3 py-1 rounded-lg hover:bg-gray-100 transition"
+>
+  📦 Orders
+</Link>
 
   {isLoggedIn ? (
     <button

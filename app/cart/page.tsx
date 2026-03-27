@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface CartItem {
   _id: string;
@@ -16,6 +17,7 @@ interface CartItem {
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const token =
     typeof window !== "undefined"
@@ -232,11 +234,12 @@ const removeItem = async (item: CartItem) => {
           </div>
 
           {/* CHECKOUT BUTTON */}
-          <button
-            className="mt-6 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700"
-          >
-            Checkout
-          </button>
+<button
+  onClick={() => router.push("/checkout")}
+  className="mt-6 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700"
+>
+  Checkout
+</button>
 
         </>
       )}
