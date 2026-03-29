@@ -24,8 +24,6 @@ export default function CartPage() {
       ? sessionStorage.getItem("token")
       : null;
 
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
   
   // 🔥 LOAD CART
   const fetchCart = async () => {

@@ -34,7 +34,7 @@ useEffect(() => {
 
   // LOAD CART
 const fetchCart = async () => {
-  const res = await fetch("http://localhost:5000/api/orderItems", {
+  const res = await fetch("/api/orderItems", {
   headers: { Authorization: `Bearer ${token}` },
 });
 
@@ -46,7 +46,7 @@ const fetchCart = async () => {
 const fetchAddress = async () => {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-  const res = await fetch(`http://localhost:5000/api/users/${user.id}/address`, {
+  const res = await fetch(`/api/users/${user.id}/address`, {
   headers: { Authorization: `Bearer ${token}` },
 });
 
@@ -66,7 +66,7 @@ const confirmOrder = async () => {
   try {
     const token = sessionStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/api/orders/checkout", {
+    const res = await fetch("/api/orders/checkout", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${token}`,
