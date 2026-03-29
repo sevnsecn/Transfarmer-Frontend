@@ -453,7 +453,7 @@ export default function AdminPage() {
                     <div key={farm._id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition">
                       <div className="flex items-center gap-4">
                         {farm.farm_image && (
-                          <Image src={farm.farm_image} alt={farm.farm_name} width={96} height={96} className="h-12 w-12 rounded-lg object-cover" />
+                            <img src={farm.farm_image} alt={farm.farm_name} width={96} height={96} className="h-12 w-12 rounded-lg object-cover" />
                         )}
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{farm.farm_name}</p>
@@ -583,7 +583,7 @@ export default function AdminPage() {
                     <div key={product._id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition">
                       <div className="flex items-center gap-4">
                         {product.product_image && (
-                          <Image src={product.product_image} alt={product.product_name} width={96} height={96} className="h-12 w-12 rounded-lg object-cover" />
+                          <img src={product.product_image} alt={product.product_name} width={96} height={96} className="h-12 w-12 rounded-lg object-cover" />
                         )}
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{product.product_name}</p>
