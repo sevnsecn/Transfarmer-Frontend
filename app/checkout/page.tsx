@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 interface CartItem {
   _id: string;
@@ -11,48 +12,59 @@ interface CartItem {
   };
 }
 
+interface Address {
+  full_name: string;
+  phone: string;
+  address_line: string;
+  city: string;
+  postal_code: string;
+}
+
 export default function CheckoutPage() {
+  const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [address, setAddress] = useState<any>(null);
-const [token, setToken] = useState<string | null>(null);
-//   const token =
-//     typeof window !== "undefined"
-//       ? sessionStorage.getItem("token")
-//       : null;
-
-useEffect(() => {
-  const storedToken = sessionStorage.getItem("token");
-  setToken(storedToken);
-}, []); 
-
-useEffect(() => {
-  if (!token) return;
-
-  fetchCart();
-  fetchAddress();
-}, [token]);
+  const [address, setAddress] = useState<Address | null>(null);
+  const token =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("token")
+      : null;
 
   // LOAD CART
-const fetchCart = async () => {
-  const res = await fetch("http://localhost:5000/api/orderItems", {
-  headers: { Authorization: `Bearer ${token}` },
-});
+  const fetchCart = useCallback(async () => {
+    if (!token) return;
 
-  const data = await res.json();
-  if (data.success) setCart(data.data);
-};
+    const res = await fetch("/api/orderItems", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    if (data.success) setCart(data.data);
+  }, [token]);
 
   // LOAD ADDRESS
-const fetchAddress = async () => {
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const fetchAddress = useCallback(async () => {
+    if (!token) return;
 
-  const res = await fetch(`http://localhost:5000/api/users/${user.id}/address`, {
-  headers: { Authorization: `Bearer ${token}` },
-});
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-  const data = await res.json();
-  if (data.success) setAddress(data.data);
-};
+    const res = await fetch(`/api/users/${user.id}/address`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    if (data.success) setAddress(data.data);
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const timer = setTimeout(() => {
+      void fetchCart();
+      void fetchAddress();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [token, fetchCart, fetchAddress]);
 
   // TOTAL
   const total = cart.reduce(
@@ -62,40 +74,40 @@ const fetchAddress = async () => {
   );
 
   // CONFIRM ORDER
-const confirmOrder = async () => {
-  try {
-    const token = sessionStorage.getItem("token");
+  const confirmOrder = async () => {
+    try {
+      const authToken = sessionStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/api/orders/checkout", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+      const res = await fetch("/api/orders/checkout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
-    const data = await res.json();
-    console.log("CHECKOUT RES:", data);
+      const data = await res.json();
+      console.log("CHECKOUT RES:", data);
 
-    if (!data.success) {
-      alert(data.message);
-      return;
+      if (!data.success) {
+        alert(data.message);
+        return;
+      }
+
+      alert("Order berhasil dibuat!");
+      router.push("/orders");
+
+    } catch (err) {
+      console.error(err);
     }
-
-    alert("Order berhasil dibuat!");
-    window.location.href = "/orders";
-
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
 
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+    <div className="page-shell max-w-4xl">
+      <h1 className="mb-6 text-3xl font-extrabold text-slate-900">Checkout</h1>
 
       {/* ADDRESS */}
-      <div className="mb-6 p-4 border rounded">
+      <div className="app-card mb-6 p-5">
         <h2 className="font-bold mb-2">Shipping Address</h2>
 
         {address ? (
@@ -111,9 +123,9 @@ const confirmOrder = async () => {
       </div>
 
       {/* ITEMS */}
-      <div className="mb-6">
+      <div className="app-card mb-6 p-5">
         {cart.map(item => (
-          <div key={item._id} className="flex justify-between mb-2">
+          <div key={item._id} className="mb-2 flex justify-between text-sm text-slate-700">
             <span>{item.product_id.product_name} x {item.quantity}</span>
             <span>
               Rp {(item.quantity * item.product_id.price_per_kg).toLocaleString("id-ID")}
@@ -123,7 +135,7 @@ const confirmOrder = async () => {
       </div>
 
       {/* TOTAL */}
-      <div className="flex justify-between font-bold text-xl mb-6">
+      <div className="mb-6 flex justify-between text-xl font-bold">
         <span>Total</span>
         <span>Rp {total.toLocaleString("id-ID")}</span>
       </div>

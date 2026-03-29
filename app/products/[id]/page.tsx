@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Farm {
   _id: string;
@@ -29,13 +30,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [addedToCart, setAddedToCart] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    setIsLoggedIn(!!token);
-    fetchProduct();
-  }, []);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/products/${id}`);
@@ -47,7 +42,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    void fetchProduct();
+  }, [fetchProduct]);
 
   const handleQuantityChange = (val: number) => {
     if (!product) return;
@@ -111,44 +112,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const outOfStock = product.stock_kg === 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-gray-900">Transfarmers</Link>
-          <div className="flex gap-3 items-center">
-            <Link href="/products" className="text-sm text-gray-500 hover:text-gray-800 transition">
-              ← Back to Catalogue
-            </Link>
-            {isLoggedIn ? (
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition"
-              >
-                Dashboard
-              </button>
-            ) : (
-              <>
-                <Link href="/auth/login" className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition">
-                  Login
-                </Link>
-                <Link href="/auth/signup" className="text-sm font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen">
+      <div className="page-shell">
+        <Link href="/products" className="mb-4 inline-flex items-center text-sm font-semibold text-emerald-700 hover:text-emerald-800">
+          ← Back to Catalogue
+        </Link>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Left — Image */}
-          <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
+          <div className="app-card aspect-square overflow-hidden">
             {product.product_image ? (
-              <img
+              <Image
                 src={product.product_image}
                 alt={product.product_name}
+                width={900}
+                height={900}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -159,7 +137,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Right — Info */}
-          <div className="flex flex-col justify-center">
+          <div className="app-card flex flex-col justify-center p-6 md:p-8">
             {product.farm_id && (
               <Link
                 href={`/farms/${product.farm_id._id}`}
@@ -216,7 +194,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Total Price */}
             {!outOfStock && (
-              <div className="bg-green-50 rounded-lg px-4 py-3 mb-6">
+              <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <p className="text-sm text-gray-600">Total</p>
                 <p className="text-xl font-bold text-green-700">
                   Rp {totalPrice.toLocaleString('id-ID')}
@@ -241,18 +219,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </button>
 
             {!isLoggedIn && !outOfStock && (
-              <p className="text-xs text-gray-400 text-center mt-2">You'll be asked to log in before adding to cart</p>
+              <p className="text-xs text-gray-400 text-center mt-2">You&apos;ll be asked to log in before adding to cart</p>
             )}
           </div>
         </div>
 
         {/* Farm Card */}
         {product.farm_id && (
-          <div className="mt-12 bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-center gap-6">
+          <div className="app-card mt-12 flex items-center gap-6 p-6">
             {product.farm_id.farm_image && (
-              <img
+              <Image
                 src={product.farm_id.farm_image}
                 alt={product.farm_id.farm_name}
+                width={160}
+                height={160}
                 className="w-20 h-20 object-cover rounded-xl"
               />
             )}

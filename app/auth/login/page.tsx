@@ -23,7 +23,7 @@ function LoginPage() {
     if (token) {
       router.push(redirect ||'/dashboard'); // if the user is already logged in, redirect to a page set in the params or dashboard by default
     }
-  }, [router]);
+  }, [router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,19 +50,19 @@ function LoginPage() {
       sessionStorage.setItem('user', JSON.stringify(data.user)); // store the user object that contains id, user_name, user_email, is_admin
 
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Welcome Back</h1>
-          <p className="text-gray-600 text-center mb-8">Sign in to your Transfarmers account</p>
+        <div className="app-card p-8">
+          <h1 className="mb-2 text-center text-3xl font-extrabold text-slate-900">Welcome Back</h1>
+          <p className="mb-8 text-center text-slate-600">Sign in to your Transfarmers account</p>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
@@ -113,7 +113,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -121,8 +121,8 @@ function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Don't have an account?{' '}
-              <Link href="/auth/signup" className="text-blue-600 font-semibold hover:underline">
+              Don&apos;t have an account?{' '}
+              <Link href="/auth/signup" className="font-semibold text-emerald-700 hover:underline">
                 Sign up here
               </Link>
             </p>

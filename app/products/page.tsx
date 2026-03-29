@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Farm {
   _id: string;
@@ -100,18 +100,18 @@ export default function ProductsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
    
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="page-shell max-w-6xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Our Products</h1>
-          <p className="text-gray-500 mt-1">Fresh produce sourced directly from our partner farms</p>
+          <h1 className="text-3xl font-extrabold text-slate-900">Our Products</h1>
+          <p className="mt-1 text-slate-500">Fresh produce sourced directly from our partner farms</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8">
+        <div className="app-card mb-8 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <input
               type="text"
@@ -188,13 +188,15 @@ export default function ProductsPage() {
               <Link
                 key={product._id}
                 href={`/products/${product._id}`}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden group"
+                className="app-card overflow-hidden transition group hover:-translate-y-0.5"
               >
                 <div className="aspect-square bg-gray-100 overflow-hidden">
                   {product.product_image ? (
-                    <img
+                    <Image
                       src={product.product_image}
                       alt={product.product_name}
+                      width={600}
+                      height={600}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error] = useState('');
   const [showForm, setShowForm] = useState(false);
   
 
@@ -41,7 +41,7 @@ const token =
   }));
 };
 //fetching address
-const fetchAddress = async (userId: string) => {
+const fetchAddress = useCallback(async (userId: string) => {
   try {
     const res = await fetch(`/api/users/${userId}/address`, {
       headers: {
@@ -57,7 +57,7 @@ const fetchAddress = async (userId: string) => {
   } catch (err) {
     console.error("Address error:", err);
   }
-};
+}, [token]);
 
   useEffect(() => {
   const fetchUser = async () => {
@@ -76,7 +76,7 @@ const fetchAddress = async (userId: string) => {
   };
 
     fetchUser();
-  }, [router]);
+  }, [router, fetchAddress]);
 
   //saving addres
 const saveAddress = async () => {
@@ -102,12 +102,6 @@ const saveAddress = async () => {
   }
 };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    router.push('/auth/login');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -130,22 +124,10 @@ const saveAddress = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Transfarmers</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-6 py-12">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Welcome back, {user?.user_name}!</h2>
+    <div className="min-h-screen">
+      <div className="page-shell max-w-5xl">
+        <div className="app-card p-8">
+          <h2 className="mb-6 text-3xl font-extrabold text-slate-900">Welcome back, {user?.user_name}!</h2>
 
           <div className="space-y-4">
             <div>
@@ -154,12 +136,12 @@ const saveAddress = async () => {
             </div>
 
       {/* addres section */}
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl mt-8">
-  <h2 className="text-2xl font-bold mb-4 text-black">📍 Shipping Address</h2>
+        <div className="app-card mt-8 p-8">
+      <h2 className="mb-4 text-2xl font-bold text-slate-900">Shipping Address</h2>
 
   {/* ✅ SHOW ADDRESS */}
   {address.address_line && !showForm && (
-    <div className="p-4 border rounded bg-gray-50 flex justify-between items-start text-black">
+    <div className="flex items-start justify-between rounded-lg border bg-gray-50 p-4 text-slate-800">
       
       <div>
         <p className="font-semibold">{address.full_name}</p>
@@ -183,7 +165,7 @@ const saveAddress = async () => {
   {!address.address_line && !showForm && (
     <button
       onClick={() => setShowForm(true)}
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-black"
+      className="rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
     >
       Add Address
     </button>
@@ -191,7 +173,7 @@ const saveAddress = async () => {
 
   {/* 📝 FORM */}
   {showForm && (
-    <div className="mt-4 border p-4 rounded bg-black-50 text-black">
+    <div className="mt-4 rounded-lg border bg-white p-4 text-slate-800">
 
       <div className="grid grid-cols-2 gap-4">
 
@@ -200,7 +182,7 @@ const saveAddress = async () => {
           value={address.full_name}
           onChange={handleChange}
           placeholder="Full Name"
-          className="border p-2 rounded text-black"
+          className="rounded border p-2 text-slate-900"
         />
 
         <input
@@ -208,7 +190,7 @@ const saveAddress = async () => {
           value={address.phone}
           onChange={handleChange}
           placeholder="Phone"
-          className="border p-2 rounded text-black"
+          className="rounded border p-2 text-slate-900"
         />
 
         <input
@@ -216,7 +198,7 @@ const saveAddress = async () => {
           value={address.city}
           onChange={handleChange}
           placeholder="City"
-          className="border p-2 rounded text-black"
+          className="rounded border p-2 text-slate-900"
         />
 
         <input
@@ -224,7 +206,7 @@ const saveAddress = async () => {
           value={address.postal_code}
           onChange={handleChange}
           placeholder="Postal Code"
-          className="border p-2 rounded text-black"
+          className="rounded border p-2 text-slate-900"
         />
 
         <input
@@ -232,7 +214,7 @@ const saveAddress = async () => {
           value={address.address_line}
           onChange={handleChange}
           placeholder="Full Address"
-          className="border p-2 rounded col-span-2 text-black"
+          className="col-span-2 rounded border p-2 text-slate-900"
         />
 
       </div>
@@ -248,7 +230,7 @@ const saveAddress = async () => {
 
         <button
           onClick={() => setShowForm(false)}
-          className="bg-gray-300 text-black-700 px-4 py-2 rounded hover:bg-gray-400"
+          className="rounded bg-gray-300 px-4 py-2 text-slate-700 hover:bg-gray-400"
         >
           Cancel
         </button>
@@ -270,18 +252,26 @@ const saveAddress = async () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link
                 href="/products"
-                className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition"
+                className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 transition hover:bg-emerald-100"
               >
-                <p className="font-semibold text-blue-600">Browse Products</p>
+                <p className="font-semibold text-emerald-700">Browse Products</p>
                 <p className="text-sm text-gray-600">View all available products</p>
+              </Link>
+
+              <Link
+                href="/orders"
+                className="rounded-lg border border-sky-200 bg-sky-50 p-4 transition hover:bg-sky-100"
+              >
+                <p className="font-semibold text-sky-700">My Orders</p>
+                <p className="text-sm text-gray-600">Check your order history and status</p>
               </Link>
 
               {user?.is_admin && (
                 <Link
                   href="/admin"
-                  className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition"
+                  className="rounded-lg border border-amber-200 bg-amber-50 p-4 transition hover:bg-amber-100"
                 >
-                  <p className="font-semibold text-purple-600">Admin Panel</p>
+                  <p className="font-semibold text-amber-700">Admin Panel</p>
                   <p className="text-sm text-gray-600">Manage products and farms</p>
                 </Link>
               )}

@@ -2,31 +2,44 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isLoggedIn =
+    typeof window !== "undefined" && !!sessionStorage.getItem("token");
 
-  useEffect(() => {
-    const token = sessionStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, []);
+  const handleLogout = () => {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    router.push("/auth/login");
+  };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <nav className="sticky top-0 z-30 border-b border-emerald-100 bg-white/90 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6">
 
-        <Link href="/" className="text-xl font-bold text-gray-900">
-          Transfarmers
+        <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-gray-900 md:text-xl">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-5 w-5 text-emerald-600 md:h-6 md:w-6"
+            aria-hidden="true"
+          >
+            <path d="M3 10.5L12 3l9 7.5" />
+            <path d="M5.5 9.5V21h13V9.5" />
+          </svg>
+          <span>Transfarmers</span>
         </Link>
 
-       <div className="flex gap-3">
+       <div className="flex flex-wrap items-center gap-2 md:gap-3">
 
   {/* Products Button */}
 <button
   onClick={() => router.push("/products")}
-  className="text-sm font-semibold bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellos-700 transition"
+  className="pill-btn bg-emerald-600 text-white hover:bg-emerald-700"
 >
   Products
 </button>
@@ -34,36 +47,44 @@ export default function Navbar() {
   {/* Cart Button */}
   <button
     onClick={() => router.push("/cart")}
-    className="text-sm font-semibold bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+    className="pill-btn bg-orange-500 text-white hover:bg-orange-600"
   >
     Cart
   </button>
   <Link
   href="/orders"
-  className="px-3 py-1 rounded-lg hover:bg-gray-100 transition"
+  className="pill-btn bg-slate-100 text-slate-700 hover:bg-slate-200"
 >
-  📦 Orders
+  Orders
 </Link>
 
   {isLoggedIn ? (
-    <button
-      onClick={() => router.push("/dashboard")}
-      className="text-sm font-semibold bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellos-700 transition"
-    >
-      Dashboard
-    </button>
+    <>
+      <button
+        onClick={() => router.push("/dashboard")}
+        className="pill-btn bg-lime-600 text-white hover:bg-lime-700"
+      >
+        Dashboard
+      </button>
+      <button
+        onClick={handleLogout}
+        className="pill-btn bg-slate-900 text-white hover:bg-black"
+      >
+        Logout
+      </button>
+    </>
   ) : (
     <>
       <Link
         href="/auth/login"
-        className="text-sm font-semibold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        className="pill-btn bg-sky-600 text-white hover:bg-sky-700"
       >
         Login
       </Link>
 
       <Link
         href="/auth/signup"
-        className="text-sm font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+        className="pill-btn bg-green-600 text-white hover:bg-green-700"
       >
         Sign Up
       </Link>

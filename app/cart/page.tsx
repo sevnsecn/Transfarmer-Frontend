@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface CartItem {
   _id: string;
@@ -17,124 +18,152 @@ interface CartItem {
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
-  const token =
-    typeof window !== "undefined"
-      ? sessionStorage.getItem("token")
-      : null;
+  const fetchCart = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-  
-  // 🔥 LOAD CART
-  const fetchCart = async () => {
     try {
+      setError("");
       const res = await fetch("/api/orderItems", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      if (!res.ok) {
+        throw new Error("Failed to fetch cart");
+      }
+
       const data = await res.json();
 
       if (data.success) {
         setCart(data.data);
+      } else {
+        setError(data.message || "Failed to load cart");
       }
     } catch (err) {
-      console.error("REAL ERROR:", err);
+      setError("Failed to load cart");
+      console.error("Cart error:", err);
     } finally {
       setLoading(false);
     }
+  }, [token]);
+
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem("token");
+    setToken(storedToken);
+  }, []);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  const increaseQty = async (item: CartItem) => {
+    if (!token) return;
+    if (item.quantity >= item.product_id.stock_kg) return;
+
+    const res = await fetch(`/api/orderItems/${item._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        quantity: item.quantity + 1,
+      }),
+    });
+
+    if (!res.ok) {
+      setError("Failed to update quantity");
+      return;
+    }
+
+    fetchCart();
   };
 
-useEffect(() => {
-  if (token) {
+  const decreaseQty = async (item: CartItem) => {
+    if (!token || item.quantity <= 1) return;
+
+    const res = await fetch(`/api/orderItems/${item._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        quantity: item.quantity - 1,
+      }),
+    });
+
+    if (!res.ok) {
+      setError("Failed to update quantity");
+      return;
+    }
+
     fetchCart();
+  };
 
-    const interval = setInterval(fetchCart, 2000); // auto refresh
-    return () => clearInterval(interval);
-  }
-}, [token]);
+  const removeItem = async (item: CartItem) => {
+    if (!token) return;
 
-  // 🔼 INCREASE
-  const increaseQty = async (item: CartItem) => {
-  const res = await fetch(`/api/orderItems/${item._id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      quantity: item.quantity + 1,
-    }),
-  });
+    const res = await fetch(`/api/orderItems/${item._id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  if (!res.ok) {
-    console.error("Update failed");
-    return;
-  }
+    if (!res.ok) {
+      setError("Failed to remove item");
+      return;
+    }
 
-  fetchCart();
-};
+    fetchCart();
+  };
 
-
-  // 🔽 DECREASE
-const decreaseQty = async (item: CartItem) => {
-  if (item.quantity <= 1) return;
-
-  const res = await fetch(`/api/orderItems/${item._id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      quantity: item.quantity - 1,
-    }),
-  });
-
-  if (!res.ok) {
-    console.error("Decrease failed");
-    return;
-  }
-
-  fetchCart();
-};
-
-  // ❌ REMOVE
-const removeItem = async (item: CartItem) => {
-  const res = await fetch(`/api/orderItems/${item._id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    console.error("Delete failed");
-    return;
-  }
-
-  fetchCart();
-};
-  // 💰 TOTAL
   const total = cart.reduce(
     (sum, item) =>
       sum + item.quantity * item.product_id.price_per_kg,
     0
   );
 
+  if (!token && !loading) {
+    return (
+      <div className="page-shell max-w-3xl">
+        <h1 className="mb-3 text-2xl font-bold text-gray-900">Your Cart</h1>
+        <p className="text-gray-600">Please login first to view your cart.</p>
+        <button
+          onClick={() => router.push("/auth/login")}
+          className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
-    return <div className="p-10">Loading cart...</div>;
+    return <div className="page-shell">Loading cart...</div>;
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
+    <div className="page-shell max-w-5xl">
 
-      <h1 className="text-3xl font-bold mb-6">
+      <h1 className="mb-6 text-3xl font-extrabold text-slate-900">
         🛒 Your Cart
       </h1>
+
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          {error}
+        </p>
+      )}
 
       {cart.length === 0 ? (
         <p className="text-gray-500">Your cart is empty</p>
@@ -145,16 +174,19 @@ const removeItem = async (item: CartItem) => {
             {cart.map(item => (
               <div
                 key={item._id}
-                className="flex items-center justify-between bg-white border rounded-xl p-4 shadow-sm"
+                className="app-card flex items-center justify-between p-4"
               >
                 {/* LEFT */}
                 <div className="flex items-center gap-4">
 
-                  <img
+                  <Image
                     src={
                       item.product_id.product_image ||
                       "/no-image.png"
                     }
+                    alt={item.product_id.product_name}
+                    width={160}
+                    height={160}
                     className="w-20 h-20 object-cover rounded-lg"
                   />
 
@@ -189,6 +221,7 @@ const removeItem = async (item: CartItem) => {
 
                   <button
                     onClick={() => increaseQty(item)}
+                    disabled={item.quantity >= item.product_id.stock_kg}
                     className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
                   >
                     +

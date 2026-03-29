@@ -66,19 +66,19 @@ export default function SignupPage() {
 
       // Redirect to login after successful signup
       router.push('/auth/login?message=Account created successfully. Please log in.');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Join Transfarmers</h1>
-          <p className="text-gray-600 text-center mb-8">Create your account to start shopping</p>
+        <div className="app-card p-8">
+          <h1 className="mb-2 text-center text-3xl font-extrabold text-slate-900">Join Transfarmers</h1>
+          <p className="mb-8 text-center text-slate-600">Create your account to start shopping</p>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
@@ -155,7 +155,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
@@ -164,7 +164,7 @@ export default function SignupPage() {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-green-600 font-semibold hover:underline">
+              <Link href="/auth/login" className="font-semibold text-emerald-700 hover:underline">
                 Log in here
               </Link>
             </p>

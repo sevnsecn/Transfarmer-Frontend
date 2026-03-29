@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 // Types
 interface Farm {
@@ -20,9 +21,35 @@ interface Product {
   product_image?: string;
 }
 
+interface Order {
+  items?: {
+    _id: string;
+    product_id: string;
+    quantity: number;
+    price: number;
+    item_status?: 'pending' | 'confirmed' | 'delivered';
+  }[];
+  _id: string;
+  user_id: string;
+  status: 'cart' | 'pending' | 'confirmed' | 'delivered';
+  total_price: number;
+  createdAt?: string;
+}
+
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
+
+function statusPill(status: string) {
+  if (status === 'delivered') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  if (status === 'confirmed') return 'bg-sky-50 text-sky-700 border-sky-200';
+  return 'bg-amber-50 text-amber-700 border-amber-200';
+}
+
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'products' | 'farms'>('farms');
+  const [activeTab, setActiveTab] = useState<'products' | 'farms' | 'orders'>('farms');
   const [token, setToken] = useState<string | null>(null);
 
   // Farms state
@@ -45,6 +72,13 @@ export default function AdminPage() {
   const [productSubmitting, setProductSubmitting] = useState(false);
   const [productImageKey, setProductImageKey] = useState(0);
 
+  // Orders state
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderLoading, setOrderLoading] = useState(true);
+  const [orderError, setOrderError] = useState('');
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [updatingOrderItemId, setUpdatingOrderItemId] = useState<string | null>(null);
+
   // Auth check
   useEffect(() => {
     const storedToken = sessionStorage.getItem('token');
@@ -60,13 +94,6 @@ export default function AdminPage() {
     }
     setToken(storedToken);
   }, [router]);
-
-  // Fetch farms
-  useEffect(() => {
-    if (!token) return;
-    fetchFarms();
-    fetchProducts();
-  }, [token]);
 
   const fetchFarms = async () => {
     try {
@@ -93,6 +120,99 @@ export default function AdminPage() {
       setProductError('Failed to load products');
     } finally {
       setProductLoading(false);
+    }
+  };
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      setOrderLoading(true);
+      setOrderError('');
+      const res = await fetch('/api/orders', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) setOrders(data.data);
+      else setOrderError('Failed to load orders');
+    } catch {
+      setOrderError('Failed to load orders');
+    } finally {
+      setOrderLoading(false);
+    }
+  }, [token]);
+
+  // Fetch farms
+  useEffect(() => {
+    if (!token) return;
+    fetchFarms();
+    fetchProducts();
+    void fetchOrders();
+  }, [token, fetchOrders]);
+
+  const handleOrderStatusUpdate = async (orderId: string, status: Order['status']) => {
+    try {
+      setUpdatingOrderId(orderId);
+      setOrderError('');
+
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Failed to update order status');
+
+      setOrders(prev =>
+        prev.map(order =>
+          order._id === orderId ? { ...order, status } : order
+        )
+      );
+    } catch (err: unknown) {
+      setOrderError(getErrorMessage(err, 'Failed to update order status'));
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const handleOrderItemStatusUpdate = async (
+    orderId: string,
+    itemId: string,
+    status: 'pending' | 'confirmed' | 'delivered'
+  ) => {
+    try {
+      setUpdatingOrderItemId(itemId);
+      setOrderError('');
+
+      const res = await fetch(`/api/orders/${orderId}/items/${itemId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Failed to update item status');
+
+      setOrders(prev =>
+        prev.map(order => {
+          if (order._id !== orderId) return order;
+          return {
+            ...order,
+            items: order.items?.map(item =>
+              item._id === itemId ? { ...item, item_status: status } : item
+            ),
+          };
+        })
+      );
+    } catch (err: unknown) {
+      setOrderError(getErrorMessage(err, 'Failed to update item status'));
+    } finally {
+      setUpdatingOrderItemId(null);
     }
   };
 
@@ -137,8 +257,8 @@ export default function AdminPage() {
 
       await fetchFarms();
       resetFarmForm();
-    } catch (err: any) {
-      setFarmError(err.message || 'Failed to save farm');
+    } catch (err: unknown) {
+      setFarmError(getErrorMessage(err, 'Failed to save farm'));
     } finally {
       setFarmSubmitting(false);
     }
@@ -154,8 +274,8 @@ export default function AdminPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       await fetchFarms();
-    } catch (err: any) {
-      setFarmError(err.message || 'Failed to delete farm');
+    } catch (err: unknown) {
+      setFarmError(getErrorMessage(err, 'Failed to delete farm'));
     }
   };
 
@@ -206,8 +326,8 @@ export default function AdminPage() {
 
       await fetchProducts();
       resetProductForm();
-    } catch (err: any) {
-      setProductError(err.message || 'Failed to save product');
+    } catch (err: unknown) {
+      setProductError(getErrorMessage(err, 'Failed to save product'));
     } finally {
       setProductSubmitting(false);
     }
@@ -223,8 +343,8 @@ export default function AdminPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       await fetchProducts();
-    } catch (err: any) {
-      setProductError(err.message || 'Failed to delete product');
+    } catch (err: unknown) {
+      setProductError(getErrorMessage(err, 'Failed to delete product'));
     }
   };
 
@@ -253,20 +373,17 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">Transfarmers Admin</h1>
           <button
             onClick={() => router.push('/dashboard')}
             className="text-sm text-gray-500 hover:text-gray-800 transition"
           >
-            ← Back to Dashboard
+            Back to Dashboard
           </button>
         </div>
-      </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Tabs */}
         <div className="flex gap-2 mb-8 border-b border-gray-200">
           <button
@@ -288,6 +405,16 @@ export default function AdminPage() {
             }`}
           >
             Products
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-6 py-3 text-sm font-semibold transition border-b-2 -mb-px ${
+              activeTab === 'orders'
+                ? 'border-green-600 text-green-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Orders
           </button>
         </div>
 
@@ -367,7 +494,7 @@ export default function AdminPage() {
                     <div key={farm._id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition">
                       <div className="flex items-center gap-4">
                         {farm.farm_image && (
-                          <img src={farm.farm_image} alt={farm.farm_name} className="w-12 h-12 object-cover rounded-lg" />
+                          <Image src={farm.farm_image} alt={farm.farm_name} width={96} height={96} className="h-12 w-12 rounded-lg object-cover" />
                         )}
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{farm.farm_name}</p>
@@ -497,7 +624,7 @@ export default function AdminPage() {
                     <div key={product._id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition">
                       <div className="flex items-center gap-4">
                         {product.product_image && (
-                          <img src={product.product_image} alt={product.product_name} className="w-12 h-12 object-cover rounded-lg" />
+                          <Image src={product.product_image} alt={product.product_name} width={96} height={96} className="h-12 w-12 rounded-lg object-cover" />
                         )}
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{product.product_name}</p>
@@ -526,6 +653,97 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── ORDERS TAB ── */}
+        {activeTab === 'orders' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Manage Order Status</h2>
+            {orderError && <p className="text-red-600 text-sm mb-4">{orderError}</p>}
+
+            {orderLoading ? (
+              <p className="text-gray-500 text-sm">Loading...</p>
+            ) : orders.length === 0 ? (
+              <p className="text-gray-500 text-sm">No orders yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {orders.map(order => (
+                  <div
+                    key={order._id}
+                    className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="w-full">
+                      <p className="text-sm font-semibold text-gray-900">Order ID: {order._id}</p>
+                      <p className="text-xs text-gray-500">User: {order.user_id}</p>
+                      <p className="mt-1">
+                        <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${statusPill(order.status)}`}>
+                          Order {order.status}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Total: Rp {Number(order.total_price || 0).toLocaleString('id-ID')}
+                      </p>
+
+                      {order.items && order.items.length > 0 && (
+                        <div className="mt-3 space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
+                          {order.items.map(item => (
+                            <div
+                              key={item._id}
+                              className="flex flex-col gap-2 border-b border-gray-200 pb-2 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between"
+                            >
+                              <p className="text-xs text-gray-700">
+                                Product: {item.product_id} · Qty: {item.quantity} · Price: Rp {Number(item.price || 0).toLocaleString('id-ID')}
+                              </p>
+
+                              <div className="flex items-center gap-2">
+                                <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${statusPill(item.item_status || 'pending')}`}>
+                                  {item.item_status || 'pending'}
+                                </span>
+                                <label className="text-xs font-medium text-gray-700">Item Status</label>
+                                <select
+                                  value={item.item_status || 'pending'}
+                                  onChange={e =>
+                                    handleOrderItemStatusUpdate(
+                                      order._id,
+                                      item._id,
+                                      e.target.value as 'pending' | 'confirmed' | 'delivered'
+                                    )
+                                  }
+                                  disabled={updatingOrderItemId === item._id}
+                                  className="rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60"
+                                >
+                                  <option value="pending">pending</option>
+                                  <option value="confirmed">confirmed</option>
+                                  <option value="delivered">delivered</option>
+                                </select>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-700">Status</label>
+                      <select
+                        value={order.status}
+                        onChange={e =>
+                          handleOrderStatusUpdate(order._id, e.target.value as Order['status'])
+                        }
+                        disabled={updatingOrderId === order._id}
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60"
+                      >
+                        <option value="cart">cart</option>
+                        <option value="pending">pending</option>
+                        <option value="confirmed">confirmed</option>
+                        <option value="delivered">delivered</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
