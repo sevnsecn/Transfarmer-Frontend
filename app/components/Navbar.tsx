@@ -2,11 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
+
+function subscribeToAuth(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getAuthSnapshot() {
+  if (typeof window === "undefined") return false;
+  return !!sessionStorage.getItem("token");
+}
 
 export default function Navbar() {
   const router = useRouter();
-  const isLoggedIn =
-    typeof window !== "undefined" && !!sessionStorage.getItem("token");
+  const isLoggedIn = useSyncExternalStore(
+    subscribeToAuth,
+    getAuthSnapshot,
+    () => false
+  );
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");

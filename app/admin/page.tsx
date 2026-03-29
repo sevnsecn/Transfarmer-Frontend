@@ -27,7 +27,6 @@ interface Order {
     product_id: string;
     quantity: number;
     price: number;
-    item_status?: 'pending' | 'confirmed' | 'delivered';
   }[];
   _id: string;
   user_id: string;
@@ -77,7 +76,6 @@ export default function AdminPage() {
   const [orderLoading, setOrderLoading] = useState(true);
   const [orderError, setOrderError] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
-  const [updatingOrderItemId, setUpdatingOrderItemId] = useState<string | null>(null);
 
   // Auth check
   useEffect(() => {
@@ -174,45 +172,6 @@ export default function AdminPage() {
       setOrderError(getErrorMessage(err, 'Failed to update order status'));
     } finally {
       setUpdatingOrderId(null);
-    }
-  };
-
-  const handleOrderItemStatusUpdate = async (
-    orderId: string,
-    itemId: string,
-    status: 'pending' | 'confirmed' | 'delivered'
-  ) => {
-    try {
-      setUpdatingOrderItemId(itemId);
-      setOrderError('');
-
-      const res = await fetch(`/api/orders/${orderId}/items/${itemId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Failed to update item status');
-
-      setOrders(prev =>
-        prev.map(order => {
-          if (order._id !== orderId) return order;
-          return {
-            ...order,
-            items: order.items?.map(item =>
-              item._id === itemId ? { ...item, item_status: status } : item
-            ),
-          };
-        })
-      );
-    } catch (err: unknown) {
-      setOrderError(getErrorMessage(err, 'Failed to update item status'));
-    } finally {
-      setUpdatingOrderItemId(null);
     }
   };
 
@@ -695,29 +654,6 @@ export default function AdminPage() {
                               <p className="text-xs text-gray-700">
                                 Product: {item.product_id} · Qty: {item.quantity} · Price: Rp {Number(item.price || 0).toLocaleString('id-ID')}
                               </p>
-
-                              <div className="flex items-center gap-2">
-                                <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${statusPill(item.item_status || 'pending')}`}>
-                                  {item.item_status || 'pending'}
-                                </span>
-                                <label className="text-xs font-medium text-gray-700">Item Status</label>
-                                <select
-                                  value={item.item_status || 'pending'}
-                                  onChange={e =>
-                                    handleOrderItemStatusUpdate(
-                                      order._id,
-                                      item._id,
-                                      e.target.value as 'pending' | 'confirmed' | 'delivered'
-                                    )
-                                  }
-                                  disabled={updatingOrderItemId === item._id}
-                                  className="rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60"
-                                >
-                                  <option value="pending">pending</option>
-                                  <option value="confirmed">confirmed</option>
-                                  <option value="delivered">delivered</option>
-                                </select>
-                              </div>
                             </div>
                           ))}
                         </div>
