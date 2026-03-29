@@ -22,12 +22,16 @@ export default function CartPage() {
   const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchCart = useCallback(async () => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  const token =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("token")
+      : null;
 
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  
+  // 🔥 LOAD CART
+  const fetchCart = async () => {
     try {
       setError("");
       const res = await fetch("/api/orderItems", {

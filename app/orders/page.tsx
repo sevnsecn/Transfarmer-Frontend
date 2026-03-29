@@ -7,7 +7,6 @@ interface OrderItem {
   product_id?: string;
   quantity: number;
   price: number;
-  item_status?: 'pending' | 'confirmed' | 'delivered';
 }
 
 interface Order {
@@ -93,10 +92,7 @@ export default function OrdersPage() {
                 {order.items?.map((item, i) => (
                   <p key={item._id || i}>
                     {item.quantity}x - Rp{" "}
-                    {item.price.toLocaleString("id-ID")} · status:{" "}
-                    <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${statusPill(item.item_status || "pending")}`}>
-                      {item.item_status || "pending"}
-                    </span>
+                    {item.price.toLocaleString("id-ID")}
                   </p>
                 ))}
               </div>
