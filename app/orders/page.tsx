@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 interface OrderItem {
   _id?: string;
   product_id?: string;
+  product_name?: string;
   quantity: number;
   price: number;
 }
@@ -13,6 +14,8 @@ interface Order {
   _id: string;
   status: string;
   total_price: number;
+  user_name?: string;
+  address?: any;
   items?: OrderItem[];
 }
 
@@ -91,7 +94,7 @@ export default function OrdersPage() {
               <div className="mt-3 text-sm text-slate-600">
                 {order.items?.map((item, i) => (
                   <p key={item._id || i}>
-                    {item.quantity}x - Rp{" "}
+                    {item.quantity}x {item.product_name} - Rp{" "}
                     {item.price.toLocaleString("id-ID")}
                   </p>
                 ))}
