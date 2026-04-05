@@ -2,30 +2,38 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
-
-function subscribeToAuth(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-function getAuthSnapshot() {
-  if (typeof window === "undefined") return false;
-  return !!sessionStorage.getItem("token");
-}
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
   const router = useRouter();
-  const isLoggedIn = useSyncExternalStore(
-    subscribeToAuth,
-    getAuthSnapshot,
-    () => false
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = sessionStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+
+    checkAuth();
+
+    window.addEventListener("storage", checkAuth);
+
+    //biar langsung update tanpa refresh yak
+    window.addEventListener("authChange", checkAuth);
+
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("authChange", checkAuth);
+    };
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
+
+    //update to the navbar ya
+    window.dispatchEvent(new Event("authChange"));
+
     router.push("/auth/login");
   };
 
