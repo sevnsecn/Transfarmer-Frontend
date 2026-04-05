@@ -10,12 +10,20 @@ interface OrderItem {
   price: number;
 }
 
+interface Address {
+  full_name?: string;
+  phone?: string;
+  address_line?: string;
+  city?: string;
+  postal_code?: string;
+}
+
 interface Order {
   _id: string;
   status: string;
   total_price: number;
   user_name?: string;
-  address?: any;
+  address?: Address;
   items?: OrderItem[];
 }
 
@@ -79,6 +87,24 @@ export default function OrdersPage() {
               className="app-card p-5"
             >
               <p className="font-bold text-slate-900">Order ID: {order._id}</p>
+
+  {order.user_name && (
+  <p className="mt-1 text-sm text-slate-700">
+    Order by: {order.user_name}
+  </p>
+)}
+
+  {order.address && (
+  <div className="mt-2 text-sm text-slate-600">
+    <p className="font-semibold">Shipping Address</p>
+    <p>{order.address.full_name}</p>
+    <p>{order.address.phone}</p>
+    <p>
+      {order.address.address_line}, {order.address.city}{" "}
+      {order.address.postal_code}
+    </p>
+  </div>
+)}
 
               <p className="mt-1 text-sm text-slate-700">
                 Status:
