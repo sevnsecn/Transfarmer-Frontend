@@ -48,6 +48,8 @@ function LoginPage() {
       
       sessionStorage.setItem('token', data.token); // Save JWT token in sessionStorage
       sessionStorage.setItem('user', JSON.stringify(data.user)); // store the user object that contains id, user_name, user_email, is_admin
+      
+      window.dispatchEvent(new Event("authChange"));
 
       router.push('/dashboard');
     } catch (err: unknown) {
