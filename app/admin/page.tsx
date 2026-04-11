@@ -25,11 +25,20 @@ interface Order {
   items?: {
     _id: string;
     product_id: string;
+    product_name?: string;
     quantity: number;
     price: number;
   }[];
   _id: string;
   user_id: string;
+  user_name?: string;
+  address?: {
+    full_name?: string;
+    phone?: string;
+    address_line?: string;
+    city?: string;
+    postal_code?: string;
+  };
   status: 'cart' | 'pending' | 'confirmed' | 'delivered';
   total_price: number;
   createdAt?: string;
@@ -634,7 +643,17 @@ export default function AdminPage() {
                   >
                     <div className="w-full">
                       <p className="text-sm font-semibold text-gray-900">Order ID: {order._id}</p>
-                      <p className="text-xs text-gray-500">User: {order.user_id}</p>
+                      <p className="text-xs text-gray-500">User: {order.user_name} ({order.user_id})</p>
+                      {order.address && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      <p>{order.address.full_name}</p>
+                      <p>{order.address.phone}</p>
+                      <p>
+                        {order.address.address_line}, {order.address.city}{" "}
+                        {order.address.postal_code}
+                        </p>
+                    </div>
+                    )}
                       <p className="mt-1">
                         <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${statusPill(order.status)}`}>
                           Order {order.status}
@@ -652,7 +671,7 @@ export default function AdminPage() {
                               className="flex flex-col gap-2 border-b border-gray-200 pb-2 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between"
                             >
                               <p className="text-xs text-gray-700">
-                                Product: {item.product_id} · Qty: {item.quantity} · Price: Rp {Number(item.price || 0).toLocaleString('id-ID')}
+                                Product: {item.product_name} ({item.product_id}) · Qty: {item.quantity} · Price: Rp {Number(item.price || 0).toLocaleString('id-ID')}
                               </p>
                             </div>
                           ))}
