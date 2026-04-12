@@ -44,6 +44,7 @@ export default function CartPage() {
 
       if (data.success) {
         setCart(data.data);
+        window.dispatchEvent(new Event("cartUpdated"));
       } else {
         setError(data.message || "Failed to load cart");
       }

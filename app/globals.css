@@ -55,3 +55,85 @@ a:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+.home-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: homeReveal 520ms ease-out forwards;
+}
+
+.home-reveal-1 {
+  animation-delay: 40ms;
+}
+
+.home-reveal-2 {
+  animation-delay: 120ms;
+}
+
+.home-reveal-3 {
+  animation-delay: 200ms;
+}
+
+.home-reveal-4 {
+  animation-delay: 260ms;
+}
+
+.home-reveal-5 {
+  animation-delay: 320ms;
+}
+
+.home-reveal-6 {
+  animation-delay: 380ms;
+}
+
+.motion-card {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.motion-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(21, 37, 24, 0.1);
+}
+
+.motion-btn {
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 180ms ease;
+}
+
+.motion-btn:hover {
+  transform: translateY(-1px);
+}
+
+.motion-btn:active {
+  transform: scale(0.98);
+}
+
+@keyframes homeReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reveal {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .motion-card,
+  .motion-btn {
+    transition: none;
+  }
+
+  .motion-card:hover,
+  .motion-btn:hover,
+  .motion-btn:active {
+    transform: none;
+  }
+}

@@ -85,6 +85,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
     if (data.success) {
       setAddedToCart(true);
+      window.dispatchEvent(new Event("cartUpdated"));
       setTimeout(() => setAddedToCart(false), 2000);
     }
   } catch (err) {

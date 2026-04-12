@@ -98,6 +98,8 @@ export default function CheckoutPage() {
       }
 
       alert("Order berhasil dibuat!");
+      window.dispatchEvent(new Event("cartUpdated"));
+      window.dispatchEvent(new Event("ordersUpdated"));
       router.push("/orders");
 
     } catch (err) {
