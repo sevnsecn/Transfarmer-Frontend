@@ -141,7 +141,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="app-card flex flex-col justify-center p-6 md:p-8">
             {product.farm_id && (
               <Link
-                href={`/farms/${product.farm_id._id}`}
+                href={`/products?farm_id=${product.farm_id._id}`} //redirect to product catalogue and fills in the farm fitler 
                 className="text-sm text-green-600 font-medium hover:underline mb-2"
               >
                 {product.farm_id.farm_name}
@@ -243,10 +243,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-sm text-gray-500">📍 {product.farm_id.farm_location}</p>
             </div>
             <Link
-              href={`/farms/${product.farm_id._id}`}
+              href={`/products?farm_id=${product.farm_id._id}`}       //redirect to product catalogue and fills in the farm fitler       
               className="text-sm font-semibold text-green-600 border border-green-200 px-4 py-2 rounded-lg hover:bg-green-50 transition"
             >
-              View Farm →
+              View Other Products →
             </Link>
           </div>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -18,13 +19,13 @@ interface Product {
   farm_id?: Farm;
 }
 
-export default function ProductsPage() {
- 
+function ProductsPageInner() {
+  const searchParams = useSearchParams();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
 
   // Filters
   const [search, setSearch] = useState('');
@@ -33,18 +34,13 @@ export default function ProductsPage() {
   const [maxPrice, setMaxPrice] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
 
-  useEffect(() => {
-    fetchFarms();
-    fetchProducts();
-  }, []);
-
   const fetchFarms = async () => {
     try {
       const res = await fetch('/api/farms');
       const data = await res.json();
       if (data.success) setFarms(data.data);
     } catch {
-      // silently fail, farms filter just won't populate
+      // silently fail
     }
   };
 
@@ -74,6 +70,13 @@ export default function ProductsPage() {
     }
   };
 
+  useEffect(() => {
+    const farmId = searchParams.get('farm_id') || '';
+    setSelectedFarm(farmId);
+    fetchFarms();
+    fetchProducts({ farm_id: farmId || undefined });
+  }, [searchParams]);
+
   const handleSearch = () => {
     fetchProducts({
       search,
@@ -92,7 +95,6 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  // Sort is done client-side since the backend doesn't have a sort param
   const sortedProducts = [...products].sort((a, b) => {
     if (sortOrder === 'asc') return a.price_per_kg - b.price_per_kg;
     if (sortOrder === 'desc') return b.price_per_kg - a.price_per_kg;
@@ -101,8 +103,6 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen">
-   
-
       <div className="page-shell max-w-6xl">
         {/* Header */}
         <div className="mb-8">
@@ -225,5 +225,13 @@ export default function ProductsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense>
+      <ProductsPageInner />
+    </Suspense>
   );
 }

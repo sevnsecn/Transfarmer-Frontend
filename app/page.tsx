@@ -1,6 +1,39 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link";
 
 export default function Home() {
+  const [farmCount, setFarmCount] = useState<number>(0);
+  const [orderCount, setOrderCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch farms count
+        const farmsRes = await fetch('/api/farms');
+        if (farmsRes.ok) {
+          const farms = await farmsRes.json();
+          setFarmCount(Array.isArray(farms) ? farms.length : farms.data?.length || 0);
+        }
+
+        // Fetch orders count
+        const ordersRes = await fetch('/api/orders');
+        if (ordersRes.ok) {
+          const orders = await ordersRes.json();
+          setOrderCount(Array.isArray(orders) ? orders.length : orders.data?.length || 0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <main className="flex min-h-screen flex-col pb-28">
       <section className="page-shell pt-14 md:pt-20 home-reveal home-reveal-1">
@@ -78,18 +111,14 @@ export default function Home() {
             </article>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl border border-emerald-100 bg-white/80 p-4 text-center">
+          <div className="mt-5 grid grid-cols-2 gap-3 rounded-2xl border border-emerald-100 bg-white/80 p-4 text-center">
             <div>
-              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">120+</p>
+              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : farmCount}</p>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Partner Farms</p>
             </div>
             <div>
-              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">5K+</p>
+              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : orderCount}</p>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Orders Completed</p>
-            </div>
-            <div>
-              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">4.8</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Average Rating</p>
             </div>
           </div>
         </div>
