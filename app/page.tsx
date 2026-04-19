@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from "next/link";
+import Image from 'next/image';
 
 export default function Home() {
   const [farmCount, setFarmCount] = useState<number>(0);
@@ -9,6 +10,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [productCount, setProductCount] = useState<number>(0);
   const [userCount, setUserCount] = useState<number>(0);
+  const [farms, setFarms] = useState<{ _id: string; farm_name: string; farm_location: string; farm_image?: string }[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<{ _id: string; product_name: string; price_per_kg: number; stock_kg: number; product_image?: string; farm_id?: { farm_name: string } }[]>([]);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -41,6 +45,21 @@ export default function Home() {
           const userList = Array.isArray(users) ? users : users.data || [];
           const nonAdminUsers = userList.filter((user: any) => !user.is_admin);          setUserCount(nonAdminUsers.length);
         }
+
+        // Fetch farms with full data for display
+        const farmsFullRes = await fetch('/api/farms');
+        if (farmsFullRes.ok) {
+          const farmsData = await farmsFullRes.json();
+          setFarms(farmsData.data || []);
+        }
+
+        // Fetch products for carousel
+        const featuredRes = await fetch('/api/products');
+        if (featuredRes.ok) {
+          const featuredData = await featuredRes.json();
+          const available = (featuredData.data || []).filter((p: any) => p.stock_kg > 0);
+          setFeaturedProducts(available);
+        }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
@@ -50,6 +69,14 @@ export default function Home() {
 
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (featuredProducts.length === 0) return;
+    const interval = setInterval(() => {
+      setCarouselIndex(prev => (prev + 1) % featuredProducts.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [featuredProducts]);
 
   return (
     <main className="flex min-h-screen flex-col pb-28">
@@ -150,6 +177,135 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── FARMS GRID ── */}
+      {farms.length > 0 && (
+        <section className="page-shell pt-2 md:pt-4 home-reveal home-reveal-3">
+          <div className="app-card p-6 md:p-8">
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-600">Our Partners</p>
+              <h2 className="mt-2 text-2xl font-extrabold text-slate-900 md:text-3xl">Meet the Farms</h2>
+              <p className="mt-1 text-sm text-slate-500">Fresh produce sourced directly from these trusted local farms</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+              {farms.map(farm => (
+                <Link
+                  key={farm._id}
+                  href={`/products?farm_id=${farm._id}`}
+                  className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 transition hover:border-emerald-200 hover:bg-emerald-50"
+                >
+                  <div className="h-16 w-16 overflow-hidden rounded-xl bg-white shadow-sm">
+                    {farm.farm_image ? (
+                      <Image
+                        src={farm.farm_image}
+                        alt={farm.farm_name}
+                        width={64}
+                        height={64}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-2xl">🌾</div>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 transition">{farm.farm_name}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{farm.farm_location}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── PRODUCT CAROUSEL ── */}
+      {featuredProducts.length > 0 && (
+        <section className="page-shell pt-2 md:pt-4 home-reveal home-reveal-4">
+          <div className="app-card p-6 md:p-8">
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-600">Available Now</p>
+                <h2 className="mt-2 text-2xl font-extrabold text-slate-900 md:text-3xl">Fresh Picks</h2>
+              </div>
+              <Link href="/products" className="text-sm font-semibold text-emerald-700 hover:underline">
+                View all →
+              </Link>
+            </div>
+
+            {/* Carousel */}
+            <div className="relative overflow-hidden rounded-2xl">
+              <div
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
+              >
+                {featuredProducts.map(product => (
+                  <Link
+                    key={product._id}
+                    href={`/products/${product._id}`}
+                    className="relative min-w-full"
+                  >
+                    <div className="aspect-[16/7] w-full overflow-hidden bg-gray-100">
+                      {product.product_image ? (
+                        <Image
+                          src={product.product_image}
+                          alt={product.product_name}
+                          width={1200}
+                          height={525}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-6xl">🥬</div>
+                      )}
+                    </div>
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-5 md:p-8">
+                      {product.farm_id && (
+                        <p className="mb-1 text-xs font-semibold text-emerald-300">{product.farm_id.farm_name}</p>
+                      )}
+                      <p className="text-xl font-extrabold text-white md:text-3xl">{product.product_name}</p>
+                      <p className="mt-1 text-sm font-semibold text-white/80">
+                        Rp {product.price_per_kg.toLocaleString('id-ID')}<span className="font-normal text-white/60">/kg</span>
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Prev / Next buttons */}
+              <button
+                onClick={() => setCarouselIndex(prev => (prev - 1 + featuredProducts.length) % featuredProducts.length)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow hover:bg-white transition"
+                aria-label="Previous"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => setCarouselIndex(prev => (prev + 1) % featuredProducts.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow hover:bg-white transition"
+                aria-label="Next"
+              >
+                ›
+              </button>
+
+              {/* Dots */}
+              <div className="absolute bottom-3 right-4 flex gap-1.5">
+                {featuredProducts.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCarouselIndex(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === carouselIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* footer */}
       <footer className="fixed inset-x-0 bottom-0 z-50 border-t border-emerald-200/80 bg-gradient-to-r from-emerald-50/95 via-lime-50/95 to-emerald-100/95 px-4 py-3 text-emerald-900 shadow-[0_-8px_30px_rgba(21,37,24,0.12)] backdrop-blur-sm home-reveal home-reveal-4">
         <div className="mx-auto w-full max-w-6xl">
           <div className="mb-2 flex flex-wrap items-center justify-center gap-2 text-center sm:justify-between sm:text-left">
