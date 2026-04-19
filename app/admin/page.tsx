@@ -39,7 +39,7 @@ interface Order {
     city?: string;
     postal_code?: string;
   };
-  status: 'cart' | 'pending' | 'confirmed' | 'delivered';
+  status: 'cart' | 'pending' | 'confirmed' | 'delivered' | 'completed';
   total_price: number;
   createdAt?: string;
 }
@@ -680,20 +680,27 @@ export default function AdminPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <label className="text-xs font-medium text-gray-700">Status</label>
-                      <select
-                        value={order.status}
-                        onChange={e =>
-                          handleOrderStatusUpdate(order._id, e.target.value as Order['status'])
-                        }
-                        disabled={updatingOrderId === order._id}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60"
-                      >
-                        <option value="cart">cart</option>
-                        <option value="pending">pending</option>
-                        <option value="confirmed">confirmed</option>
-                        <option value="delivered">delivered</option>
-                      </select>
+                      {order.status === "pending" && (
+                        <button
+                          onClick={() => handleOrderStatusUpdate(order._id, "confirmed")}
+                          disabled={updatingOrderId === order._id}
+                          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50 transition"
+                        >
+                          Confirm Order
+                        </button>
+                      )}
+                      {order.status === "confirmed" && (
+                        <button
+                          onClick={() => handleOrderStatusUpdate(order._id, "delivered")}
+                          disabled={updatingOrderId === order._id}
+                          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                        >
+                          Mark Delivered
+                        </button>
+                      )}
+                      {order.status === "delivered" && (
+                        <span className="text-xs text-gray-400 italic">Awaiting buyer confirmation</span>
+                      )}
                     </div>
                   </div>
                 ))}
