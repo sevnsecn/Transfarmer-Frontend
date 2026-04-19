@@ -7,6 +7,8 @@ export default function Home() {
   const [farmCount, setFarmCount] = useState<number>(0);
   const [orderCount, setOrderCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [productCount, setProductCount] = useState<number>(0);
+  const [userCount, setUserCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -23,6 +25,21 @@ export default function Home() {
         if (ordersRes.ok) {
           const orders = await ordersRes.json();
           setOrderCount(Array.isArray(orders) ? orders.length : orders.data?.length || 0);
+        }
+
+        // Fetch products count
+        const productsRes = await fetch('/api/products');
+        if (productsRes.ok) {
+          const products = await productsRes.json();
+          setProductCount(Array.isArray(products) ? products.length : products.data?.length || 0);
+        }
+
+        // Fetch users count (excluding admins where is_admin = 1)
+        const usersRes = await fetch('/api/users');
+        if (usersRes.ok) {
+          const users = await usersRes.json();
+          const userList = Array.isArray(users) ? users : users.data || [];
+          const nonAdminUsers = userList.filter((user: any) => !user.is_admin);          setUserCount(nonAdminUsers.length);
         }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -111,14 +128,23 @@ export default function Home() {
             </article>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 rounded-2xl border border-emerald-100 bg-white/80 p-4 text-center">
+          {/* stats grid */}
+          <div className="mt-5 grid grid-cols-2 gap-3 rounded-2xl border border-emerald-100 bg-white/80 p-4 text-center sm:grid-cols-4">
             <div>
               <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : farmCount}</p>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Partner Farms</p>
             </div>
             <div>
+              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : productCount}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Products Listed</p>
+            </div>
+            <div>
               <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : orderCount}</p>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Orders Completed</p>
+            </div>
+            <div>
+              <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : userCount}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Users Signed Up</p>
             </div>
           </div>
         </div>
@@ -160,7 +186,7 @@ export default function Home() {
               className="transition hover:text-emerald-950 hover:underline"
               aria-label="Send email to muhammad.thedy@student.sgu.ac.id"
             >
-              Contact Us: muhammad.thedy@student.sgu.ac.id
+              Contact Us: office@transfarmers.com
             </a>
 
             <a
