@@ -21,12 +21,15 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
-      {
-        source: "/api/:path*",
-        destination: `${API_URL}/api/:path*`,
-      },
-    ];
-  },
+      { source: "/api/auth/:path*", destination: "http://localhost:5001/api/auth/:path*" },
+      { source: "/api/users/:path*", destination: "http://localhost:5001/api/users/:path*" },
+      { source: "/api/farms/:path*", destination: "http://localhost:5002/api/farms/:path*" },
+      { source: "/api/products/:path*", destination: "http://localhost:5003/api/products/:path*" },
+      { source: "/api/orders/:path*", destination: "http://localhost:5004/api/orders/:path*" },
+      { source: "/api/orderItems/:path*", destination: "http://localhost:5004/api/orderItems/:path*" },
+      { source: "/api/upload/:path*", destination: "http://localhost:5005/api/upload/:path*" },
+    ]
+  }
 };
 
 export default nextConfig;

@@ -181,7 +181,7 @@ function ProductsPageInner() {
         ) : error ? (
           <div className="text-center py-20 text-red-500">{error}</div>
         ) : sortedProducts.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">No products found.</div>
+          <div className="text-center py-20 text-gray-500">No products found matching your filters.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {sortedProducts.map(product => (

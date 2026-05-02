@@ -36,6 +36,7 @@ function statusPill(status: string) {
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const token =
     typeof window !== "undefined"
@@ -43,19 +44,19 @@ export default function OrdersPage() {
       : null;
 
   const fetchOrders = useCallback(async () => {
-    if (!token) return;
-
+    if (!token) { setLoading(false); return; }
     try {
       const res = await fetch("/api/orders/my-orders", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setOrders(data.data);
       }
     } catch (error) {
       console.error("Failed to fetch orders:", error);
+    } finally {
+      setLoading(false); // add this
     }
   }, [token]);
 
@@ -94,10 +95,12 @@ export default function OrdersPage() {
     <div className="page-shell max-w-5xl">
       <h1 className="mb-6 text-3xl font-extrabold text-slate-900">My Orders</h1>
 
-      {orders.length === 0 ? (
-        <p className="text-slate-500">No orders yet</p>
-      ) : (
-        <div className="space-y-4">
+    {loading ? (
+      <p className="text-slate-500">Fetching your orders...</p>
+    ) : orders.length === 0 ? (
+      <p className="text-slate-500">You have no orders yet.</p>
+    ) : (
+      <div className="space-y-4">
           {orders.map((order) => (
             <div key={order._id} className="app-card p-5">
               <p className="font-bold text-slate-900">Order ID: {order._id}</p>

@@ -17,48 +17,37 @@ export default function Home() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch farms count
-        const farmsRes = await fetch('/api/farms');
-        if (farmsRes.ok) {
-          const farms = await farmsRes.json();
-          setFarmCount(Array.isArray(farms) ? farms.length : farms.data?.length || 0);
-        }
+        // All 4 independent fetches fire at the same time
+        const [farmsRes, ordersRes, productsRes, usersRes] = await Promise.all([
+          fetch('/api/farms'),
+          fetch('/api/orders'),
+          fetch('/api/products'),
+          fetch('/api/users'),
+        ]);
 
-        // Fetch orders count
-        const ordersRes = await fetch('/api/orders');
-        if (ordersRes.ok) {
-          const orders = await ordersRes.json();
-          setOrderCount(Array.isArray(orders) ? orders.length : orders.data?.length || 0);
-        }
+        const [farmsData, ordersData, productsData, usersData] = await Promise.all([
+          farmsRes.ok ? farmsRes.json() : null,
+          ordersRes.ok ? ordersRes.json() : null,
+          productsRes.ok ? productsRes.json() : null,
+          usersRes.ok ? usersRes.json() : null,
+        ]);
 
-        // Fetch products count
-        const productsRes = await fetch('/api/products');
-        if (productsRes.ok) {
-          const products = await productsRes.json();
-          setProductCount(Array.isArray(products) ? products.length : products.data?.length || 0);
+        if (farmsData) {
+          const farmList = farmsData.data || [];
+          setFarmCount(farmList.length);
+          setFarms(farmList); // reuse the same response — no second /farms call
         }
-
-        // Fetch users count (excluding admins where is_admin = 1)
-        const usersRes = await fetch('/api/users');
-        if (usersRes.ok) {
-          const users = await usersRes.json();
-          const userList = Array.isArray(users) ? users : users.data || [];
-          const nonAdminUsers = userList.filter((user: any) => !user.is_admin);          setUserCount(nonAdminUsers.length);
+        if (ordersData) {
+          setOrderCount(ordersData.data?.length || 0);
         }
-
-        // Fetch farms with full data for display
-        const farmsFullRes = await fetch('/api/farms');
-        if (farmsFullRes.ok) {
-          const farmsData = await farmsFullRes.json();
-          setFarms(farmsData.data || []);
-        }
-
-        // Fetch products for carousel
-        const featuredRes = await fetch('/api/products');
-        if (featuredRes.ok) {
-          const featuredData = await featuredRes.json();
-          const available = (featuredData.data || []).filter((p: any) => p.stock_kg > 0);
+        if (productsData) {
+          const available = (productsData.data || []).filter((p: any) => p.stock_kg > 0);
+          setProductCount(productsData.data?.length || 0);
           setFeaturedProducts(available);
+        }
+        if (usersData) {
+          const userList = Array.isArray(usersData) ? usersData : usersData.data || [];
+          setUserCount(userList.filter((u: any) => !u.is_admin).length);
         }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -66,7 +55,6 @@ export default function Home() {
         setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
@@ -167,7 +155,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : orderCount}</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Orders Completed</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/70 md:text-xs">Active Orders</p>
             </div>
             <div>
               <p className="text-xl font-extrabold text-emerald-700 md:text-2xl">{loading ? '-' : userCount}</p>

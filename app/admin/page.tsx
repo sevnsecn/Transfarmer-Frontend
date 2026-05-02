@@ -319,7 +319,7 @@ export default function AdminPage() {
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setProductForm({
-      farm_id: product.farm_id._id,
+      farm_id: product.farm_id?._id ?? '',
       product_name: product.product_name,
       price_per_kg: String(product.price_per_kg),
       stock_kg: String(product.stock_kg),

@@ -87,7 +87,6 @@ export default function CheckoutPage() {
             Authorization: `Bearer ${authToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ address }),
 });
       const data = await res.json();
       console.log("CHECKOUT RES:", data);

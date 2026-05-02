@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const router = useRouter();
@@ -10,6 +10,7 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
+  const lastFetchRef = useRef<number>(0);
 
   const fetchNavbarCounts = async () => {
     const token = sessionStorage.getItem("token");
@@ -19,6 +20,10 @@ export default function Navbar() {
       setOrdersCount(0);
       return;
     }
+
+    const now = Date.now();
+    if (now - lastFetchRef.current < 5000) return;
+    lastFetchRef.current = now;
 
     try {
       const [cartRes, ordersRes] = await Promise.all([
