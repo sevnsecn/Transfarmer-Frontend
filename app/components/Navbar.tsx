@@ -65,20 +65,25 @@ export default function Navbar() {
       void fetchNavbarCounts();
     };
 
+    const forceRefresh = () => {
+      lastFetchRef.current = 0;
+      void fetchNavbarCounts();
+    };
+
     checkAuth();
 
     window.addEventListener("storage", checkAuth);
 
     //biar langsung update tanpa refresh yak
     window.addEventListener("authChange", checkAuth);
-    window.addEventListener("cartUpdated", fetchNavbarCounts);
-    window.addEventListener("ordersUpdated", fetchNavbarCounts);
+    window.addEventListener("cartUpdated", forceRefresh);
+    window.addEventListener("ordersUpdated", forceRefresh);
 
     return () => {
       window.removeEventListener("storage", checkAuth);
       window.removeEventListener("authChange", checkAuth);
-      window.removeEventListener("cartUpdated", fetchNavbarCounts);
-      window.removeEventListener("ordersUpdated", fetchNavbarCounts);
+      window.removeEventListener("cartUpdated", forceRefresh);
+      window.removeEventListener("ordersUpdated", forceRefresh);
     };
   }, []);
 

@@ -26,11 +26,7 @@ export default function DashboardPage() {
   city: "",
   postal_code: "",
 });
-
-const token =
-  typeof window !== "undefined"
-    ? sessionStorage.getItem("token")
-    : null;
+  const [token, setToken] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const { name, value } = e.target;
@@ -60,23 +56,25 @@ const fetchAddress = useCallback(async (userId: string) => {
 }, [token]);
 
   useEffect(() => {
-  const fetchUser = async () => {
-    const token = sessionStorage.getItem('token');
+    const storedToken = sessionStorage.getItem('token');
     const storedUser = sessionStorage.getItem('user');
 
-    if (!token || !storedUser) {
+    if (!storedToken || !storedUser) {
       router.push('/auth/login');
       return;
     }
 
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
-    fetchAddress(parsedUser.id); //
+    setToken(storedToken);
     setLoading(false);
-  };
+  }, [router]);
 
-    fetchUser();
-  }, [router, fetchAddress]);
+  useEffect(() => {
+    if (token === null) return; // still initializing
+    if (!token || !user) return; // confirmed no token or user
+    fetchAddress(user.id);
+  }, [token, user, fetchAddress]);
 
   //saving addres
 const saveAddress = async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface OrderItem {
   _id?: string;
@@ -38,10 +39,15 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
-  const token =
-    typeof window !== "undefined"
-      ? sessionStorage.getItem("token")
-      : null;
+  const [token, setToken] = useState<string | null>(null);
+  const router = useRouter();
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem("token");
+    setToken(storedToken);
+    setInitialized(true);
+  }, []);
 
   const fetchOrders = useCallback(async () => {
     if (!token) { setLoading(false); return; }
@@ -56,12 +62,13 @@ export default function OrdersPage() {
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {
-      setLoading(false); // add this
+      setLoading(false);
     }
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
+    if (token === null) return; // still initializing
+    if (!token) { setLoading(false); return; } // confirmed no token
     const timer = setTimeout(() => { void fetchOrders(); }, 0);
     return () => clearTimeout(timer);
   }, [token, fetchOrders]);
@@ -91,11 +98,32 @@ export default function OrdersPage() {
     }
   };
 
+  if (initialized && !token) {
+    return (
+      <div className="page-shell max-w-3xl">
+        <h1 className="mb-3 text-2xl font-bold text-gray-900">
+          My Orders
+        </h1>
+
+        <p className="text-gray-600">
+          Please login first to view your orders.
+        </p>
+
+        <button
+          onClick={() => router.push("/auth/login")}
+          className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="page-shell max-w-5xl">
       <h1 className="mb-6 text-3xl font-extrabold text-slate-900">My Orders</h1>
 
-    {loading ? (
+    {!initialized || loading ? (
       <p className="text-slate-500">Fetching your orders...</p>
     ) : orders.length === 0 ? (
       <p className="text-slate-500">You have no orders yet.</p>

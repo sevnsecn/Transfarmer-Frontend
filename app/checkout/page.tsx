@@ -27,10 +27,7 @@ export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [address, setAddress] = useState<Address | null>(null);
-  const token =
-    typeof window !== "undefined"
-      ? sessionStorage.getItem("token")
-      : null;
+  const [token, setToken] = useState<string | null>(null);
 
   // LOAD CART
   const fetchCart = useCallback(async () => {
@@ -59,8 +56,12 @@ export default function CheckoutPage() {
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
+    setToken(sessionStorage.getItem("token"));
+  }, []);
 
+  useEffect(() => {
+    if (token === null) return; // still initializing
+    if (!token) return; // confirmed no token
     const timer = setTimeout(() => {
       void fetchCart();
       void fetchAddress();

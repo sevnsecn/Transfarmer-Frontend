@@ -81,7 +81,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     });
 
     const data = await res.json();
+
+    console.log("STATUS:", res.status);
     console.log("ADD RESULT:", data);
+
+    if (!res.ok) {
+      alert(data.message || "Failed to add to cart");
+      return;
+    }
 
     if (data.success) {
       setAddedToCart(true);
