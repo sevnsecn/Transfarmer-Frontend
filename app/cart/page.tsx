@@ -129,8 +129,10 @@ export default function CartPage() {
   };
 
   const total = cart.reduce(
-    (sum, item) =>
-      sum + item.quantity * item.product_id.price_per_kg,
+    (sum, item) => {
+      if (!item.product_id) return sum;
+      return sum + item.quantity * item.product_id.price_per_kg;
+    },
     0
   );
 
@@ -172,7 +174,9 @@ export default function CartPage() {
         <>
           <div className="space-y-4">
 
-            {cart.map(item => (
+            {cart
+              .filter(item => item.product_id != null)
+              .map(item => (
               <div
                 key={item._id}
                 className="app-card flex items-center justify-between p-4"

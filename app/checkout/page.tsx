@@ -72,8 +72,10 @@ export default function CheckoutPage() {
 
   // TOTAL
   const total = cart.reduce(
-    (sum, item) =>
-      sum + item.quantity * item.product_id.price_per_kg,
+    (sum, item) => {
+      if (!item.product_id) return sum;
+      return sum + item.quantity * item.product_id.price_per_kg;
+    },
     0
   );
 
@@ -237,7 +239,9 @@ export default function CheckoutPage() {
 </div>
       {/* ITEMS */}
       <div className="app-card mb-6 p-5">
-        {cart.map(item => (
+        {cart
+          .filter(item => item.product_id != null)
+          .map(item => (
           <div key={item._id} className="mb-2 flex justify-between text-sm text-slate-700">
             <span>{item.product_id.product_name} x {item.quantity}</span>
             <span>
